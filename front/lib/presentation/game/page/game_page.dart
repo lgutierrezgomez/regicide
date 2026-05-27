@@ -18,6 +18,7 @@ import '../grid/player_actions_panel.dart';
 import '../grid/player_hand_strip.dart';
 import '../grid/symbol_legend_panel.dart';
 import '../grid/teammates_panel.dart';
+import '../mobile/mobile_game_body.dart';
 import '../widgets/choose_next_player_dialog.dart';
 import '../widgets/game_concede_button.dart';
 import '../widgets/game_turn_app_bar.dart';
@@ -100,6 +101,9 @@ class GamePage extends StatelessWidget {
 class _GameBody extends StatelessWidget {
   const _GameBody({required this.state});
 
+  /// Below this width the screen switches to the stacked mobile layout
+  /// (Phase 5C). Above, the existing 3x3 perspective grid runs.
+  static const _mobileBreakpoint = 600.0;
   static const _outerPadding = 20.0;
 
   final GameState state;
@@ -122,7 +126,16 @@ class _GameBody extends StatelessWidget {
             HomeErrorBanner(message: state.errorMessage!),
             const SizedBox(height: 8),
           ],
-          Expanded(child: _buildGrid(context, state)),
+          Expanded(
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                final isMobile = constraints.maxWidth < _mobileBreakpoint;
+                return isMobile
+                    ? MobileGameBody(state: state)
+                    : _buildGrid(context, state);
+              },
+            ),
+          ),
           if (state.actionPending) ...[
             const SizedBox(height: 8),
             const LinearProgressIndicator(),

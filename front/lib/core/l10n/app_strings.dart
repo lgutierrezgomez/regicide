@@ -111,6 +111,10 @@ abstract final class AppStrings {
   static const gameTavernLabel = 'Tavern';
   static const gamePlayedThisFightTitle = 'Played this fight';
   static const gamePlayedThisFightEmpty = 'No cards played yet';
+  static const gameTeammatesLabel = 'Teammates';
+  static String gameAttackLine(int attack) => 'Attack $attack';
+  static String gameDamageLine(int dealt, int max) => 'Damage $dealt/$max';
+  static String gameShieldLine(int shield) => 'Shield −$shield';
   static String gameHandTitle(int count, int max) =>
       'Your hand ($count / $max)';
   static const gameHandEmpty = 'No cards in hand';

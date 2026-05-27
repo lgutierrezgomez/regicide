@@ -75,7 +75,7 @@ Issues observed once the MVP went live on real devices and real browsers (2026-0
 
 - [x] **Home page — scroll when content overflows.** Confirmed fine in code — `home_page.dart` already wraps the column in `SingleChildScrollView` (verified 2026-05-27, no fix needed).
 - [x] **Lobby page — scroll when content overflows (2026-05-27).** Replaced outer `Padding` with `SingleChildScrollView` in `lobby_page.dart` so roster + invite card + communication reminder + host hint + start button stay reachable on mobile portrait.
-- [ ] **Game page — mobile layout.** The trapezoid perspective table assumes a wide aspect ratio. On mobile portrait (~390×844) it's unreadable. Two reasonable directions: (a) switch to a stacked panels layout below a breakpoint (`MediaQuery.size.width < ~700`), reusing `EnemyCardCell`, `PlayedThisFightCell`, `EnemyFightStatsCell`, `PlayerHandStrip` in a vertical column — fastest path; (b) keep the perspective table but rotate-to-landscape suggestion if portrait detected — worse UX. Recommend (a). New file: `lib/presentation/game/page/game_page_mobile.dart` (or a `LayoutBuilder` switch inside `game_page.dart`).
+- [x] **Game page — mobile layout (2026-05-27).** Below a 600px width breakpoint, `game_page.dart` now dispatches to `MobileGameBody` (`lib/presentation/game/mobile/`) — a vertical stack with enemy card + pile chips + fight stats always visible, secondary panels (teammates, played-this-fight, symbol legend) behind collapsibles, hand horizontally scrollable, and a sticky bottom action bar. Reuses existing `EnemyCardCell`, `PlayedThisFightCell`, `TeammatesPanel`, `SymbolLegendPanel`, `PlayerHandStrip`, `GameOverPanel`. Switches live on viewport resize via `LayoutBuilder`.
 
 ### Step 4 — one-at-a-time discard
 
