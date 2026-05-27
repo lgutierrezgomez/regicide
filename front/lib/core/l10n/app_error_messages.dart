@@ -33,6 +33,7 @@ abstract final class AppErrorMessages {
       case 'INVALID_PLAY':
       case 'CANNOT_YIELD':
       case 'INSUFFICIENT_DISCARD':
+      case 'INVALID_DISCARD':
         return fallback.isNotEmpty ? fallback : AppStrings.errorGameAction;
       default:
         return fallback.isNotEmpty ? fallback : AppStrings.errorGeneric;

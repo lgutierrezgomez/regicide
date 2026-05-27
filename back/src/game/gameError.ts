@@ -8,6 +8,7 @@ export class GameError extends Error {
       | "INVALID_PLAY"
       | "CANNOT_YIELD"
       | "INSUFFICIENT_DISCARD"
+      | "INVALID_DISCARD"
       | "NOT_HOST"
       | "GAME_OVER",
   ) {
