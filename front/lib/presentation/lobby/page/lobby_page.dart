@@ -49,7 +49,7 @@ class LobbyPage extends StatelessWidget {
               return const Center(child: Text(AppStrings.noSession));
             }
 
-            return Padding(
+            return SingleChildScrollView(
               padding: const EdgeInsets.all(24),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
