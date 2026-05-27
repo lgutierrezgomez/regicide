@@ -1,10 +1,10 @@
 # Project status
 
-**Last updated:** 2026-05-20
+**Last updated:** 2026-05-27
 
 ## Current phase
 
-**Phase 5 — Polish & deploy** (in progress, **paused** on table UX). **Phase 4 (4A–4D)** complete. **Solo playtest** signed off. **Multiplayer table UX** iteration done. **Phase 5B** done: jester choose-next doc, paginated rules dialog, symbol legend, security notes — `docs/front/PHASE5B_ONBOARDING.md`. Resume with **2–4 player** playtest or art / deploy. Table code: `front/lib/presentation/game/table/` — `docs/front/PHASE5_TABLE.md`.
+**Phase 5 — Polish & deploy:** ✅ deploy done (2026-05-27). MVP is live: **frontend** at https://lgutierrezgomez.github.io/regicide/ (GitHub Pages) and **backend** at https://regicide-back.onrender.com (Render free Web Service). Live-use issues now tracked under **Phase 5C — Live-use polish** in `ROADMAP.md`. Phase 4 (4A–4D), 5 table UX, and 5B onboarding all signed off earlier.
 
 ## Completed
 
@@ -17,6 +17,7 @@
 - **Dev:** `run-multiplayer-chrome.ps1` supports **1–4** Chrome profiles, cache bust on launch — `docs/front/MULTIPLAYER_LOCAL.md`
 - **5 table UX (2026-05-20):** Felt HUD (3 cards), `OpponentSeatCard` on rails, discard in hand + app bar — `CHANGELOG.md`
 - **5B onboarding (2026-05-20):** Rules dialog, symbol legend, jester doc, `SECURITY.md` — `PHASE5B_ONBOARDING.md`
+- **Deploy (2026-05-27):** GitHub repo `lgutierrezgomez/regicide`; `.github/workflows/deploy-frontend.yml` builds Flutter web with `--base-href=/regicide/` and `--dart-define=API_BASE_URL=<vars.API_BASE_URL>` and publishes to GH Pages; backend auto-deployed from `back/` on Render free tier with `CORS_ORIGINS=https://lgutierrezgomez.github.io`
 
 ## Verify (solo) — playtest complete
 
@@ -46,7 +47,13 @@ cd front && flutter test
 
 ## Next recommended step
 
-When resuming: full **2–4 player** playtest on the current layout (`run-multiplayer-chrome.ps1`), then card art / animations / deploy. No blockers for this pause.
+**Phase 5C — Live-use polish** (`ROADMAP.md`): responsive home/lobby scroll, mobile layout for the game page, and one-at-a-time discard during Step 4. Pick whichever has higher player impact first.
+
+## Production caveats
+
+- Render free Web Service **sleeps after 15 min idle** → ~50s cold start on the first player of a new session.
+- In-memory `RoomStore` is wiped on every redeploy or cold-start restart. Don't merge to `main` while a real game is in progress.
+- Flutter web is compile-time, so any change to `API_BASE_URL` requires a workflow rerun (manual dispatch or any commit to `front/**`).
 
 ## Workflow knowledge base
 

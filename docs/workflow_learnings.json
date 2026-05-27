@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "lastUpdated": "2026-05-20",
+  "lastUpdated": "2026-05-27",
   "purpose": "Accumulated workflow and architecture learnings for digitizing board games (Regicide-style: authoritative Node back, Flutter client). Append findings on code-building strategies and optimal prompts over time.",
   "projectReference": "regicide",
   "sources": [
@@ -8,6 +8,11 @@
       "id": "regicide-phase5-table-ux",
       "date": "2026-05-20",
       "summary": "Solo + multiplayer table UX iteration; Flutter perspective table below expectations; opponent seat cards; discard/app bar fixes"
+    },
+    {
+      "id": "regicide-mvp-deploy",
+      "date": "2026-05-27",
+      "summary": "First end-to-end deploy: monorepo to GitHub, Flutter web to GH Pages via Actions, Node+Socket.IO to Render free Web Service; hosting trade-offs (Koyeb no longer free, Render sleep, Fly.io needs CC); responsive + one-by-one discard issues surfaced in live use"
     }
   ],
   "stackPattern": {
@@ -267,6 +272,41 @@
         "tags": ["flutter", "structure"],
         "strategy": "Isolate table/board visuals in one folder; GamePage imports single entry widget",
         "evidence": "front/lib/presentation/game/table/ + PHASE5_TABLE.md"
+      },
+      {
+        "id": "flutter-web-compile-time-env",
+        "date": "2026-05-27",
+        "tags": ["flutter-web", "deploy", "env"],
+        "strategy": "Flutter web has no runtime env; bake API base URL via --dart-define and a GH Actions repo variable. Changing the variable alone does not change the deployed bundle; re-run the build workflow.",
+        "evidence": "front/lib/core/config/app_config.dart + .github/workflows/deploy-frontend.yml"
+      },
+      {
+        "id": "gh-pages-subpath-base-href",
+        "date": "2026-05-27",
+        "tags": ["flutter-web", "github-pages", "deploy"],
+        "strategy": "When serving Flutter web from a repo subpath (lgutierrezgomez.github.io/regicide/), build with --base-href=/regicide/. Flutter's default hash URL strategy avoids the SPA 404 fallback; if anyone calls setPathUrlStrategy() later, also publish a 404.html copy of index.html.",
+        "evidence": ".github/workflows/deploy-frontend.yml; web/index.html uses $FLUTTER_BASE_HREF placeholder"
+      },
+      {
+        "id": "render-free-tier-sleep",
+        "date": "2026-05-27",
+        "tags": ["deploy", "render", "free-tier", "websocket"],
+        "strategy": "Render free Web Service sleeps after 15 min idle (cold start ~50s) and wipes in-memory state on restart. WebSocket activity keeps it warm during active sessions, so impact is limited to first-player-of-the-day. Acceptable for MVP; escape hatches are external pinger (UptimeRobot) or paid tier or Upstash Redis for state.",
+        "evidence": "Koyeb removed free tier in 2026; Render was the only no-CC + WebSocket-capable free option remaining"
+      },
+      {
+        "id": "monorepo-host-root-dir",
+        "date": "2026-05-27",
+        "tags": ["deploy", "monorepo"],
+        "strategy": "Both Render and Koyeb need an explicit 'root directory' (e.g. 'back') when deploying from a monorepo. Without it the build fails with 'no package.json found'. Mention this up-front in deployment walkthroughs.",
+        "evidence": "Backend deploy from lgutierrezgomez/regicide with root dir back/"
+      },
+      {
+        "id": "build-cmd-installs-dev-deps",
+        "date": "2026-05-27",
+        "tags": ["deploy", "node", "typescript"],
+        "strategy": "Hosts whose default install runs 'npm ci --production' will strip TypeScript/tsx and break 'npm run build'. Override the build command to 'npm ci && npm run build' explicitly so devDependencies are present at build time.",
+        "evidence": "Render build configuration for back/"
       }
     ]
   },
@@ -295,6 +335,14 @@
         "tags": ["agent", "docs"],
         "template": "After increment: update STATUS.md, check ROADMAP.md, add CHANGELOG.md entry if notable",
         "outcome": "good"
+      },
+      {
+        "id": "teaching-mode-narration",
+        "date": "2026-05-27",
+        "tags": ["agent", "deploy", "ux"],
+        "template": "When user is new to a tool (GH Actions, Render, GitHub repo setup): narrate what each step does and why before/while doing it. Use tables for UI form fields ('Field | Value | Why'). Tell user what to come back with after each external step.",
+        "outcome": "good",
+        "notes": "Used through monorepo init, GH Pages workflow, and Render setup walkthroughs"
       }
     ],
     "antiPatterns": [

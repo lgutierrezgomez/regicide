@@ -53,11 +53,11 @@ Plan: [`front/PHASE4_PLAN.md`](front/PHASE4_PLAN.md) · Scan: [`front/ENVIRONMEN
 - [x] Opponent rails: compact seat cards (name / hand / n·max, turn border) — `opponent_seat_card.dart`
 - [x] Multiplayer turn bar + discard on hand (step paused 2026-05-20) — `CHANGELOG.md`
 - [ ] Card animations / image assets — deferred
-- [ ] Deploy back + front (hosting TBD) — deferred
+- [x] **Deploy back + front (2026-05-27)** — front on GitHub Pages (`/regicide/` subpath), back on Render free Web Service. See `CHANGELOG.md` and Phase 5C below for live-use follow-ups.
 - [x] Playtest solo end-to-end (perspective table + felt HUD) — 2026-05-20
 - [ ] Playtest 2–4 players end-to-end on same layout
 
-## Phase 5B — Onboarding, reference UI, security (attack one-by-one)
+## Phase 5B — Onboarding, reference UI, security
 
 Doc hub: [`front/PHASE5B_ONBOARDING.md`](front/PHASE5B_ONBOARDING.md)
 
@@ -66,6 +66,23 @@ Doc hub: [`front/PHASE5B_ONBOARDING.md`](front/PHASE5B_ONBOARDING.md)
 - [x] **Instructions entry points** — home + game app bar (`InstructionsLaunchButton`)
 - [x] **Symbol legend** — `GameSymbolLegendPanel` right of table (or below on narrow)
 - [x] **Security pass** — [`SECURITY.md`](SECURITY.md), `.env.example` back/front, `API_BASE_URL` dart-define
+
+## Phase 5C — Live-use polish (post-deploy)
+
+Issues observed once the MVP went live on real devices and real browsers (2026-05-27).
+
+### Responsive layout
+
+- [ ] **Home page — scroll when content overflows.** Form + buttons currently overflow on short viewports (mobile portrait, narrow desktop windows). Wrap the column in `SingleChildScrollView` so all controls remain reachable; keep the existing layout on tall viewports. Files: `lib/presentation/home/page/home_page.dart`.
+- [ ] **Lobby page — scroll when content overflows.** Same fix as home: roster + invite card + start button can exceed viewport with 3–4 players on mobile. Files: `lib/presentation/lobby/page/lobby_page.dart`.
+- [ ] **Game page — mobile layout.** The trapezoid perspective table assumes a wide aspect ratio. On mobile portrait (~390×844) it's unreadable. Two reasonable directions: (a) switch to a stacked panels layout below a breakpoint (`MediaQuery.size.width < ~700`), reusing `EnemyCardCell`, `PlayedThisFightCell`, `EnemyFightStatsCell`, `PlayerHandStrip` in a vertical column — fastest path; (b) keep the perspective table but rotate-to-landscape suggestion if portrait detected — worse UX. Recommend (a). New file: `lib/presentation/game/page/game_page_mobile.dart` (or a `LayoutBuilder` switch inside `game_page.dart`).
+
+### Step 4 — one-at-a-time discard
+
+- [ ] **Discard one card at a time during Step 4.** Per Regicide rules: the defending player discards cards one by one and stops as soon as cumulative discards meet or exceed the enemy attack value. Current implementation lets the player select multiple cards then submits them as a batch (`game:discard` with `cardIds: string[]`), which permits over-discarding and bypasses the "stop at threshold" rule.
+  - **Server** (`back/src/game/gameEngine.ts`, `socketServer.ts`): keep accepting `cardIds[]` for protocol stability, but in Step 4 either validate single-element arrays or accept any size up to the first card that meets the threshold and ignore the rest. Add engine tests for `discard total < required`, `= required`, and `> required by one card`. Update `back/src/game/regicide_rules.json` Step 4 spec.
+  - **Client** (`lib/presentation/game/grid/player_hand_strip.dart`, `player_actions_panel.dart`, `bloc/game_bloc.dart`): in Step 4 mode, swap multi-select for single-tap-to-discard; show running total vs required (`X / Y absorbed`); auto-end the step once `cumulative >= required`.
+  - **Rules doc** (`docs/rules/REGICIDE_RULES.md`): clarify the one-by-one phrasing.
 
 ## Phase 6 — Optional later
 

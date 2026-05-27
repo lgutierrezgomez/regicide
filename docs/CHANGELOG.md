@@ -2,7 +2,55 @@
 
 Reverse-chronological log of notable implementation changes after the initial phase milestones. For milestone scope, see `docs/front/PHASE4A.md` … `PHASE4C.md` and `docs/back/PHASE*.md`.
 
-**Last updated:** 2026-05-20
+**Last updated:** 2026-05-27
+
+---
+
+## 2026-05-27 — MVP deployed (GitHub Pages + Render)
+
+First end-to-end live deploy. Frontend reachable at https://lgutierrezgomez.github.io/regicide/, backend at https://regicide-back.onrender.com.
+
+### Repo
+
+| Change | Detail |
+|--------|--------|
+| **Monorepo** | Root `.git` initialized; `back/` and `front/` now siblings of `docs/` in a single GitHub repo (`lgutierrezgomez/regicide`, public). |
+| **Root `.gitignore`** | Covers `.claude/settings.local.json`, `.idea/`, `.chrome-profiles/`, OS noise. Per-app `.gitignore` files already cover `node_modules/`, `dist/`, `build/`, `.dart_tool/`. |
+| **Root `README.md`** | Quick-start commands + links to `PROJECT_BRIEF.md`, `STATUS.md`, `ROADMAP.md`. |
+
+### Frontend deploy — GitHub Actions → GitHub Pages
+
+| Item | Detail |
+|------|--------|
+| **Workflow** | `.github/workflows/deploy-frontend.yml` — triggers on push to `main` under `front/**` and on `workflow_dispatch`. |
+| **Build** | `subosito/flutter-action@v2` pinned to Flutter `3.27.4`; `flutter build web --release --base-href=/regicide/ --dart-define=API_BASE_URL=$API_BASE_URL`. |
+| **Publish** | `actions/upload-pages-artifact@v3` + `actions/deploy-pages@v4` (Pages source: "GitHub Actions"). |
+| **Env wiring** | `API_BASE_URL` is a **repo variable** (not secret) at `Settings → Variables → Actions`. Currently `https://regicide-back.onrender.com`. Changing it requires a workflow rerun — Flutter web is compile-time. |
+| **Subpath note** | Site served at `/regicide/`; hash-based URL strategy (Flutter default) keeps deep links working without a `404.html` SPA fallback. |
+
+### Backend deploy — Render free Web Service
+
+| Item | Detail |
+|------|--------|
+| **Service** | `regicide-back.onrender.com`, root dir `back/`, build `npm ci && npm run build`, start `npm start`. |
+| **Env** | `CORS_ORIGINS=https://lgutierrezgomez.github.io` (matches both Express `cors` in `app.ts` and Socket.IO `cors` in `socketServer.ts`). `PORT` injected by Render. |
+| **Health check** | `/health` (`routes/health.ts` → 200 JSON). |
+| **Free-tier behaviors** | Sleeps after 15 min idle → ~50s cold start. In-memory `RoomStore` / `GameService` state is wiped on cold start or redeploy; acceptable for MVP, escape hatch is Upstash Redis. |
+
+### Hosting decisions tried & rejected
+
+| Option | Why not |
+|--------|---------|
+| **Koyeb free Starter** | Removed in 2026; signup now funnels into Pro plan at $30/mo + $10 included credit. |
+| **Fly.io free credit** | Requires credit card; deferred for now. |
+| **GH Pages from `gh-pages` branch** | Older flow; the new artifact-based Pages source (`actions/deploy-pages@v4`) is simpler and avoids a checked-in build folder. |
+
+### Docs
+
+- `STATUS.md` — bumped to 2026-05-27; added live URLs and production caveats; next step → Phase 5C.
+- `ROADMAP.md` — Phase 5 deploy item checked; new Phase 5C section for live-use polish.
+- `workflow_learnings.json` — appended deploy strategies (GH Pages subpath, Flutter compile-time env, Render sleep).
+- This file.
 
 ---
 
