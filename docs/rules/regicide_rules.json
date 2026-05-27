@@ -1,0 +1,136 @@
+{
+  "meta": {
+    "game": "Regicide",
+    "version": "official_pdf_a4",
+    "sourceUrl": "https://www.regicidegame.com/site_files/33132/upload_files/RegicideRulesA4.pdf",
+    "players": { "min": 1, "max": 4 }
+  },
+  "cardTypes": {
+    "number": { "ranks": [2, 3, 4, 5, 6, 7, 8, 9, 10], "suits": ["hearts", "diamonds", "clubs", "spades"] },
+    "animalCompanion": { "rank": "A", "attackBonus": 1, "discardValue": 1 },
+    "jester": { "rank": "JOKER", "attackValue": 0, "discardValue": 0 },
+    "castle": { "ranks": ["JACK", "QUEEN", "KING"], "suits": ["hearts", "diamonds", "clubs", "spades"] }
+  },
+  "playerCountSetup": {
+    "1": { "jestersInTavern": 0, "maxHandSize": 8, "soloJestersAside": 2 },
+    "2": { "jestersInTavern": 0, "maxHandSize": 7 },
+    "3": { "jestersInTavern": 1, "maxHandSize": 6 },
+    "4": { "jestersInTavern": 2, "maxHandSize": 5 }
+  },
+  "enemies": {
+    "JACK": { "health": 20, "attack": 10, "castleOrder": 1, "inHandValue": 10 },
+    "QUEEN": { "health": 30, "attack": 15, "castleOrder": 2, "inHandValue": 15 },
+    "KING": { "health": 40, "attack": 20, "castleOrder": 3, "inHandValue": 20 }
+  },
+  "decks": {
+    "castle": {
+      "buildOrder": ["KING", "KING", "KING", "KING", "QUEEN", "QUEEN", "QUEEN", "QUEEN", "JACK", "JACK", "JACK", "JACK"],
+      "note": "Kings shuffled bottom, queens on top, jacks on top; flip top jack to start"
+    },
+    "tavern": {
+      "includes": ["number_2_to_10", "animalCompanion_x4", "jesters_per_playerCountSetup"]
+    }
+  },
+  "turnSteps": ["PLAY_OR_YIELD", "SUIT_POWER", "DEAL_DAMAGE", "SUFFER_DAMAGE"],
+  "step1": {
+    "playCard": { "attackValueFrom": "cardNumber_or_comboSum_or_defeatedEnemyValue_or_acePair" },
+    "yield": {
+      "skips": ["SUIT_POWER", "DEAL_DAMAGE"],
+      "goesTo": "SUFFER_DAMAGE",
+      "blockedWhen": "everyOtherPlayerYieldedLastTurn"
+    },
+    "animalCompanion": {
+      "canPlayAlone": true,
+      "canPairWith": "oneNonJesterCard_or_anotherAce",
+      "attackAdds": 1,
+      "sameSuitAsPair": "applySuitPowerOnce"
+    },
+    "combo": {
+      "allowedSizes": [2, 3, 4],
+      "sameRank": true,
+      "maxTotalAttack": 10,
+      "acesInCombo": false
+    },
+    "jester": {
+      "aloneOnly": true,
+      "attackValue": 0,
+      "cancelsEnemyImmunity": true,
+      "skips": ["DEAL_DAMAGE", "SUFFER_DAMAGE"],
+      "nextPlayer": "chosenByJesterPlayer",
+      "relaxedCommunicationUntil": "nextPlayerTurnStarts"
+    }
+  },
+  "suitPowers": {
+    "hearts": {
+      "timing": "immediate",
+      "action": "healFromDiscard",
+      "shuffleDiscard": true,
+      "moveToTavernBottom": "attackValue",
+      "faceDown": true
+    },
+    "diamonds": {
+      "timing": "immediate",
+      "action": "drawCards",
+      "totalDraws": "attackValue",
+      "order": "currentPlayerThenClockwise",
+      "skipAtMaxHand": true,
+      "emptyTavernNoPenalty": true
+    },
+    "clubs": {
+      "timing": "step3",
+      "action": "doubleDamage",
+      "multiplier": 2
+    },
+    "spades": {
+      "timing": "step4",
+      "action": "reduceEnemyAttack",
+      "amount": "attackValuePlayed",
+      "cumulativePerEnemy": true,
+      "persistsUntilEnemyDefeated": true
+    },
+    "resolveOrderWhenBoth": ["hearts", "diamonds"]
+  },
+  "enemyImmunity": {
+    "immuneToSuitPowerMatchingEnemySuit": true,
+    "damageStillApplies": true,
+    "jesterNegates": true,
+    "noteAfterJesterOnSpadeEnemy": "priorSpadesReduceAttack; priorClubsOnClubEnemyDoNotRetroactivelyDouble"
+  },
+  "step3": {
+    "damagePerPlay": "attackValue",
+    "clubsDoubleInThisStep": true,
+    "damageCumulativePerEnemy": true,
+    "defeatWhen": "cumulativeDamage >= enemy.health",
+    "onDefeat": {
+      "enemyToDiscard": true,
+      "exactDamageToTavernTopFaceDown": true,
+      "playedCardsToDiscard": true,
+      "revealNextCastle": true,
+      "defeatingPlayerSkipsStep4": true,
+      "defeatingPlayerStartsNewTurn": true
+    }
+  },
+  "step4": {
+    "when": "enemyNotDefeated",
+    "damageToPlayer": "enemy.attack - cumulativeSpadeShield",
+    "discardTotalAtLeast": "damageToPlayer",
+    "discardValues": { "number": "faceValue", "animalCompanion": 1, "jester": 0, "defeatedEnemyInHand": "inHandValue" },
+    "failToPay": "allPlayersLose"
+  },
+  "gameEnd": {
+    "win": "lastKingDefeated",
+    "lose": ["cannotPayDamage", "cannotPlayOrYieldOnTurn"]
+  },
+  "communication": {
+    "default": "noHandRevealOrSuggest",
+    "allowedExamples": ["handCount", "tavernDeckCount"],
+    "afterJester": "vagueTurnPreferenceOnly"
+  },
+  "soloMode": {
+    "jestersInTavern": 0,
+    "jestersAside": 2,
+    "flipPower": "discardHandRefillTo8",
+    "useAt": ["startStep1", "startStep4"],
+    "victoryTiers": { "0": "gold", "1": "silver", "2": "bronze" }
+  }
+}

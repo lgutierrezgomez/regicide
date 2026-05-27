@@ -1,0 +1,311 @@
+{
+  "schemaVersion": 1,
+  "lastUpdated": "2026-05-20",
+  "purpose": "Accumulated workflow and architecture learnings for digitizing board games (Regicide-style: authoritative Node back, Flutter client). Append findings on code-building strategies and optimal prompts over time.",
+  "projectReference": "regicide",
+  "sources": [
+    {
+      "id": "regicide-phase5-table-ux",
+      "date": "2026-05-20",
+      "summary": "Solo + multiplayer table UX iteration; Flutter perspective table below expectations; opponent seat cards; discard/app bar fixes"
+    }
+  ],
+  "stackPattern": {
+    "backend": {
+      "role": "rules + authoritative board state + realtime sync",
+      "technologies": ["Node", "Express", "TypeScript", "Socket.IO"],
+      "restFor": ["rooms", "lobby", "health"],
+      "websocketFor": ["gameplay intents", "state push"]
+    },
+    "frontend": {
+      "role": "render board state + send player intents",
+      "technologies": ["Flutter", "flutter_bloc", "Clean Architecture"],
+      "mvpPlatform": "web"
+    },
+    "rules": {
+      "human": "docs/rules/*.md",
+      "machine": "docs/rules/*.json"
+    }
+  },
+  "reuse": {
+    "description": "Patterns worth keeping or polishing with low effort on the next game",
+    "backend": [
+      {
+        "id": "authoritative-server",
+        "pattern": "Clients send intents only; server validates and emits views",
+        "examples": ["game:play", "game:discard", "game:yield"],
+        "effort": "low"
+      },
+      {
+        "id": "rules-json-plus-engine",
+        "pattern": "Machine-readable rules JSON + TS engine module per game",
+        "effort": "low"
+      },
+      {
+        "id": "rest-lobby-socket-play",
+        "pattern": "REST for room lifecycle; Socket.IO for in-game",
+        "effort": "low"
+      },
+      {
+        "id": "private-public-views",
+        "pattern": "Per-player view: public state + private hand; never broadcast full hands",
+        "effort": "low"
+      },
+      {
+        "id": "session-room-code",
+        "pattern": "Short room code + persisted playerId; ?room= deep link",
+        "effort": "low"
+      },
+      {
+        "id": "idle-cleanup-reconnect-errors",
+        "pattern": "Room idle cleanup, reconnect banner, API/socket error code mapping",
+        "effort": "low"
+      }
+    ],
+    "frontend": [
+      {
+        "id": "clean-architecture-layers",
+        "pattern": "domain / data / presentation; DTO to entity",
+        "effort": "low"
+      },
+      {
+        "id": "bloc-per-flow",
+        "pattern": "BLoC per screen (home, lobby, game); widgets stay dumb",
+        "effort": "low"
+      },
+      {
+        "id": "central-strings-theme",
+        "pattern": "AppStrings + AppColors/AppTheme single source",
+        "effort": "low"
+      },
+      {
+        "id": "docs-increment-rhythm",
+        "pattern": "PROJECT_BRIEF, STATUS, ROADMAP, phase docs, CHANGELOG per increment",
+        "effort": "low"
+      }
+    ],
+    "process": [
+      {
+        "id": "solo-then-multi-chrome",
+        "pattern": "Solo playtest first; then isolated Chrome profiles script with cache bust",
+        "artifacts": ["scripts/run-multiplayer-chrome.ps1", "docs/front/MULTIPLAYER_LOCAL.md"],
+        "effort": "low"
+      }
+    ]
+  },
+  "improve": {
+    "description": "Medium effort, high payoff before or during game #2",
+    "items": [
+      {
+        "id": "semantic-board-layout",
+        "area": "frontend-board",
+        "finding": "Avoid magic numbers in Dart (rail T, trapezoid fractions); use layout JSON or server anchors",
+        "recommendation": "table_layout.json with seatId to normalized x,y,w,h; UI positions chips over background",
+        "effort": "medium",
+        "priority": "high"
+      },
+      {
+        "id": "protocol-version-legal-actions",
+        "area": "protocol",
+        "finding": "Client re-derived affordances (e.g. canDiscard) caused UI bugs; app bar clipped actions",
+        "recommendation": "stateVersion on snapshots; server sends legalActions[]; primary actions beside affected widgets",
+        "effort": "medium",
+        "priority": "high"
+      },
+      {
+        "id": "shared-schema-codegen",
+        "area": "protocol",
+        "finding": "Hand-written DTOs in TS and Dart drift",
+        "recommendation": "JSON Schema or OpenAPI; codegen Dart + TypeScript types",
+        "effort": "medium",
+        "priority": "medium"
+      },
+      {
+        "id": "rules-table-driven-tests",
+        "area": "backend",
+        "finding": "Engine tests exist but should scale with rules file",
+        "recommendation": "Test cases embedded in or generated from rules JSON",
+        "effort": "medium",
+        "priority": "medium"
+      },
+      {
+        "id": "two-tier-ui-plan",
+        "area": "frontend",
+        "finding": "Polish table before engine stable wasted iteration",
+        "recommendation": "Tier 1: panels/lists/chips until playtest passes; Tier 2: asset skin sprint",
+        "effort": "low",
+        "priority": "high"
+      },
+      {
+        "id": "flutter-web-deploy-early",
+        "area": "process",
+        "finding": "flutter run web cache and profile staleness hid stale builds",
+        "recommendation": "Weekly flutter build web; script cache bust for local MP",
+        "effort": "low",
+        "priority": "medium"
+      }
+    ]
+  },
+  "alternatives": {
+    "description": "Different approaches when pure Flutter widget board drawing underwhelms",
+    "regicidePainPoint": "Custom trapezoid CustomPaint, rail positioning, app bar layout fights; high tweak cost, fragile on web",
+    "options": [
+      {
+        "id": "asset-first-flutter",
+        "name": "Asset-first board (Flutter Stack)",
+        "fit": ["card games", "fixed table perspective"],
+        "approach": "Background PNG/SVG + Positioned chips; layout from JSON percents",
+        "pros": ["Matches player expectations", "No trapezoid math", "Reuse Flutter shell"],
+        "cons": ["Fixed resolution assets", "Less dynamic resize"],
+        "effort": "low-medium",
+        "recommendedDefault": true
+      },
+      {
+        "id": "html-css-hybrid",
+        "name": "HTML/CSS board in Flutter web",
+        "fit": ["web-only MVP", "complex zones", "designer-friendly layout"],
+        "approach": "Flutter shell; HtmlElementView or iframe board; postMessage or shared socket",
+        "pros": ["Fast layout iteration", "CSS grid for seats"],
+        "cons": ["Two web codebases", "Mobile needs separate board"],
+        "effort": "medium"
+      },
+      {
+        "id": "flame-layer",
+        "name": "Flame 2D layer + Flutter HUD",
+        "fit": ["sprites", "drag-drop", "zones"],
+        "approach": "Flame for board; Material for hand and chrome",
+        "pros": ["Anchors, layers, camera"],
+        "cons": ["Learning curve", "Web perf varies"],
+        "effort": "medium"
+      },
+      {
+        "id": "semantic-panels-only",
+        "name": "Panel/chip UI only (no table illustration)",
+        "fit": ["MVP", "rules-first development"],
+        "approach": "Enemy panel, fight stats, opponent chips, hand row",
+        "pros": ["Fastest path to playable MP", "Proven in Regicide 4C"],
+        "cons": ["Weak first impression"],
+        "effort": "low",
+        "recommendedFor": "first playable milestone"
+      },
+      {
+        "id": "separate-game-engine-renderer",
+        "name": "Godot/Phaser board + Node authority",
+        "fit": ["heavy animation", "maps", "miniatures"],
+        "approach": "Strict state sync contract; renderer is view-only",
+        "pros": ["Best motion"],
+        "cons": ["Heavy pipeline"],
+        "effort": "high"
+      }
+    ],
+    "defaultRecommendation": {
+      "cardGamesLikeRegicide": ["semantic-panels-only for milestone 1", "asset-first-flutter for milestone 2"],
+      "avoidAsFirstUI": ["custom-paint-perspective-table"]
+    }
+  },
+  "targetArchitectureGame2": {
+    "description": "Suggested repo shape for next board-game digitization",
+    "directories": {
+      "docs/rules": "game_rules.json + human rules",
+      "back/engine": "pure (state, intent) => state | error",
+      "back/protocol": "intents, PublicBoardState, PlayerView schemas",
+      "back/rooms": "reuse Regicide room/socket patterns",
+      "front/domain": "entities, repositories",
+      "front/presentation/shell": "lobby, app bar, connection",
+      "front/presentation/board": "one renderer strategy only",
+      "front/assets/board": "background, layout JSON"
+    },
+    "dayOneContracts": [
+      {
+        "name": "PublicBoardState",
+        "rule": "All information visible to opponents and spectators; no hidden fields"
+      },
+      {
+        "name": "PlayerView",
+        "rule": "PublicBoardState + private zones + legalActions[]"
+      },
+      {
+        "name": "legalActions",
+        "rule": "Server lists affordances; client does not re-derive rule engine for button visibility"
+      }
+    ]
+  },
+  "codeBuildingStrategies": {
+    "description": "Actionable dev practices; append new entries with id, date, tags",
+    "entries": [
+      {
+        "id": "actions-near-objects",
+        "date": "2026-05-20",
+        "tags": ["flutter", "ux", "game-ui"],
+        "strategy": "Place primary phase actions next to the objects they affect (hand, zone), not only in app bar",
+        "evidence": "Discard button clipped in 72px app bar during step 4 MP test"
+      },
+      {
+        "id": "toolbar-height-match-preferred-size",
+        "date": "2026-05-20",
+        "tags": ["flutter", "appbar"],
+        "strategy": "PreferredSizeWidget toolbarHeight in build() must equal preferredSize when content grows",
+        "evidence": "Turn message disappeared when preferredSize 108 but toolbarHeight 72"
+      },
+      {
+        "id": "powershell-ascii-only",
+        "date": "2026-05-20",
+        "tags": ["scripts", "windows"],
+        "strategy": "Avoid Unicode em-dash and <PLACEHOLDER> in .ps1; use ROOMCODE not <CODE>",
+        "evidence": "run-multiplayer-chrome.ps1 parse errors on Windows PS 5.1"
+      },
+      {
+        "id": "chrome-profile-cache-bust",
+        "date": "2026-05-20",
+        "tags": ["flutter-web", "testing"],
+        "strategy": "Clear profile cache + cb query param + --disable-cache when opening test browsers",
+        "evidence": "Stale Flutter web build in isolated Chrome profiles"
+      },
+      {
+        "id": "module-folder-for-visual-tuning",
+        "date": "2026-05-20",
+        "tags": ["flutter", "structure"],
+        "strategy": "Isolate table/board visuals in one folder; GamePage imports single entry widget",
+        "evidence": "front/lib/presentation/game/table/ + PHASE5_TABLE.md"
+      }
+    ]
+  },
+  "promptPatterns": {
+    "description": "Prompt templates and notes that worked or failed; append with id, date, outcome",
+    "entries": [
+      {
+        "id": "session-bootstrap",
+        "date": "2026-05-20",
+        "tags": ["agent", "context"],
+        "template": "Read PROJECT_BRIEF.md + STATUS.md + relevant ROADMAP slice before coding; implement only next unchecked item unless user redirects",
+        "outcome": "good",
+        "notes": "Documented in PROJECT_BRIEF How to use"
+      },
+      {
+        "id": "table-visual-tuning-scope",
+        "date": "2026-05-20",
+        "tags": ["agent", "flutter", "scope"],
+        "template": "For table look changes: edit only front/lib/presentation/game/table/ and app_colors; see PHASE5_TABLE.md file map",
+        "outcome": "good",
+        "notes": "Reduces unrelated diffs"
+      },
+      {
+        "id": "increment-docs-update",
+        "date": "2026-05-20",
+        "tags": ["agent", "docs"],
+        "template": "After increment: update STATUS.md, check ROADMAP.md, add CHANGELOG.md entry if notable",
+        "outcome": "good"
+      }
+    ],
+    "antiPatterns": [
+      {
+        "id": "big-bang-table-art-before-playtest",
+        "description": "Building perspective table and rail math before solo/MP rules path verified",
+        "prefer": "semantic-panels-only then asset-first skin"
+      }
+    ]
+  },
+  "futureEntries": {
+    "instructions": "Append to codeBuildingStrategies.entries, promptPatterns.entries, improve.items, or sources[] with unique id and ISO date. Bump lastUpdated. Do not remove schemaVersion without migration note."
+  }
+}

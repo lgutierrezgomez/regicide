@@ -1,0 +1,16 @@
+# back/ and front/ have their own .gitignore files for app-specific outputs.
+# This file only covers root-level artifacts and per-user local config.
+
+# Local Claude Code settings (per-developer)
+.claude/settings.local.json
+
+# Local IDE settings
+.idea/
+
+# Local runtime data for multi-window Chrome testing
+# (created by scripts/run-multiplayer-chrome.ps1)
+.chrome-profiles/
+
+# OS noise
+.DS_Store
+Thumbs.db
