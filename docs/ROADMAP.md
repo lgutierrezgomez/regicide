@@ -73,8 +73,8 @@ Issues observed once the MVP went live on real devices and real browsers (2026-0
 
 ### Responsive layout
 
-- [ ] **Home page — scroll when content overflows.** Form + buttons currently overflow on short viewports (mobile portrait, narrow desktop windows). Wrap the column in `SingleChildScrollView` so all controls remain reachable; keep the existing layout on tall viewports. Files: `lib/presentation/home/page/home_page.dart`.
-- [ ] **Lobby page — scroll when content overflows.** Same fix as home: roster + invite card + start button can exceed viewport with 3–4 players on mobile. Files: `lib/presentation/lobby/page/lobby_page.dart`.
+- [x] **Home page — scroll when content overflows.** Confirmed fine in code — `home_page.dart` already wraps the column in `SingleChildScrollView` (verified 2026-05-27, no fix needed).
+- [x] **Lobby page — scroll when content overflows (2026-05-27).** Replaced outer `Padding` with `SingleChildScrollView` in `lobby_page.dart` so roster + invite card + communication reminder + host hint + start button stay reachable on mobile portrait.
 - [ ] **Game page — mobile layout.** The trapezoid perspective table assumes a wide aspect ratio. On mobile portrait (~390×844) it's unreadable. Two reasonable directions: (a) switch to a stacked panels layout below a breakpoint (`MediaQuery.size.width < ~700`), reusing `EnemyCardCell`, `PlayedThisFightCell`, `EnemyFightStatsCell`, `PlayerHandStrip` in a vertical column — fastest path; (b) keep the perspective table but rotate-to-landscape suggestion if portrait detected — worse UX. Recommend (a). New file: `lib/presentation/game/page/game_page_mobile.dart` (or a `LayoutBuilder` switch inside `game_page.dart`).
 
 ### Step 4 — one-at-a-time discard
