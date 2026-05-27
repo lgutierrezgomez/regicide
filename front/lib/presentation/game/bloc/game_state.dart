@@ -88,12 +88,16 @@ class GameState extends Equatable {
   bool get isDiscardPhase =>
       canInteract && public!.phase == GamePhase.step4Discard;
 
-  /// Step 4: discard total ≥ required (0 when spades fully block the attack).
+  /// Step 4 (one-at-a-time): exactly one card selected, or zero cards when
+  /// shields fully blocked the attack (player confirms with empty discard).
   bool get canDiscard {
     if (!isDiscardPhase) {
       return false;
     }
-    return selectedDiscardTotal >= requiredDiscardTotal;
+    if (requiredDiscardTotal == 0) {
+      return true;
+    }
+    return selectedCardIds.length == 1;
   }
 
   bool get canChooseNext =>

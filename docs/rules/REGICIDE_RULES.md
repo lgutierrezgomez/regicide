@@ -80,7 +80,7 @@ Cooperative game: players defeat **12 enemies** (4 Jacks, 4 Queens, 4 Kings). Wi
 
 ### Step 4 — Suffer damage
 
-- If enemy not defeated: current player discards cards totaling ≥ enemy attack (minus cumulative spade shield).
+- If enemy not defeated: current player **discards cards one at a time** until cumulative discard value reaches the enemy's attack (minus cumulative spade shield). You must **stop immediately** the moment the threshold is met — you cannot keep discarding once the damage is absorbed. Over-discarding by a single card is allowed (e.g. needing 5 with a single 7 in hand spends the 7), but you may not keep adding cards after the threshold.
 - Ace = 1 when discarding; Jester = 0.
 - Cannot pay → player dies, **everyone loses**.
 - Empty hand is OK if you can still act on future turns. Next player clockwise, Step 1.

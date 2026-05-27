@@ -47,7 +47,7 @@ cd front && flutter test
 
 ## Next recommended step
 
-**Phase 5C — Live-use polish** (`ROADMAP.md`): responsive home/lobby scroll, mobile layout for the game page, and one-at-a-time discard during Step 4. Pick whichever has higher player impact first.
+**Phase 5C — Live-use polish: complete (2026-05-27).** All three items shipped: home was already wrapped in `SingleChildScrollView`; lobby got the same wrapper; the game page now dispatches to a stacked `MobileGameBody` below 600px; and Step 4 enforces one-at-a-time discard server-side with matching client UX. Next: real-world 2–4 player session on the deployed site, then `Phase 5` deferred items (card animations / image assets) or `Phase 6` (accounts, spectators, mobile native targets).
 
 ## Production caveats
 

@@ -79,10 +79,7 @@ Issues observed once the MVP went live on real devices and real browsers (2026-0
 
 ### Step 4 — one-at-a-time discard
 
-- [ ] **Discard one card at a time during Step 4.** Per Regicide rules: the defending player discards cards one by one and stops as soon as cumulative discards meet or exceed the enemy attack value. Current implementation lets the player select multiple cards then submits them as a batch (`game:discard` with `cardIds: string[]`), which permits over-discarding and bypasses the "stop at threshold" rule.
-  - **Server** (`back/src/game/gameEngine.ts`, `socketServer.ts`): keep accepting `cardIds[]` for protocol stability, but in Step 4 either validate single-element arrays or accept any size up to the first card that meets the threshold and ignore the rest. Add engine tests for `discard total < required`, `= required`, and `> required by one card`. Update `back/src/game/regicide_rules.json` Step 4 spec.
-  - **Client** (`lib/presentation/game/grid/player_hand_strip.dart`, `player_actions_panel.dart`, `bloc/game_bloc.dart`): in Step 4 mode, swap multi-select for single-tap-to-discard; show running total vs required (`X / Y absorbed`); auto-end the step once `cumulative >= required`.
-  - **Rules doc** (`docs/rules/REGICIDE_RULES.md`): clarify the one-by-one phrasing.
+- [x] **Discard one card at a time during Step 4 (2026-05-27).** Engine now enforces single-card discards: `pendingDamage > 0` requires `cardIds.length === 1`, the card's discard value subtracts from `pendingDamage`, step 4 ends only when `pendingDamage` reaches 0 (or empty `cardIds` when shields already blocked the attack). Client bloc enforces single-select during step 4 and the Discard button now shows "Continue" when shields fully blocked. Rules JSON + human rules doc updated. New engine + state tests cover partial discard, exact-cover, over-cover, multi-card rejection, and empty-discard rejection.
 
 ## Phase 6 — Optional later
 

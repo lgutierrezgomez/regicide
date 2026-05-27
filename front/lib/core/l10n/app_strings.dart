@@ -89,9 +89,9 @@ abstract final class AppStrings {
   static const gamePhaseStep1 = 'Play cards against the enemy or yield.';
   static String gamePhaseDiscard(int required, int selected) {
     if (required == 0) {
-      return 'Spades blocked the attack — tap Discard (0) to continue.';
+      return 'Spades blocked the attack — tap Continue.';
     }
-    return 'Discard cards totaling at least $required (selected: $selected).';
+    return 'Discard one card at a time — $required more to absorb.';
   }
 
   static const gamePhaseChooseNextSolo = 'Continue your turn (solo).';

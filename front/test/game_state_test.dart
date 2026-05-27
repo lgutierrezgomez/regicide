@@ -69,13 +69,20 @@ void main() {
     expect(stateWith().canDiscard, isTrue);
   });
 
-  test('canDiscard when selected total meets required damage', () {
+  test('canDiscard with exactly one card selected (Phase 5C: one-at-a-time)', () {
     final state = stateWith(pendingDamage: 7, selected: {'c1'});
     expect(state.canDiscard, isTrue);
   });
 
-  test('cannot discard when selected total is below required', () {
+  test('canDiscard when single card value is below pendingDamage (partial)', () {
+    // Phase 5C: card value alone doesn't have to cover the whole pendingDamage —
+    // the engine subtracts the value and keeps step 4 open for the next discard.
     final state = stateWith(pendingDamage: 10, selected: {'c1'});
+    expect(state.canDiscard, isTrue);
+  });
+
+  test('cannot discard with no card selected when pendingDamage > 0', () {
+    final state = stateWith(pendingDamage: 5, selected: const {});
     expect(state.canDiscard, isFalse);
   });
 

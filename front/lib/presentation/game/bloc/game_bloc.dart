@@ -4,6 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../core/errors/socket_exception.dart';
 import '../../../core/l10n/app_strings.dart';
+import '../../../domain/entities/game_public_state.dart';
 import '../../../domain/entities/game_state_view.dart';
 import '../../../domain/entities/room.dart';
 import '../../../domain/repositories/game_repository.dart';
@@ -130,11 +131,28 @@ class GameBloc extends Bloc<GameEvent, GameState> {
     if (!state.canInteract) {
       return;
     }
+    final isStep4 = state.public?.phase == GamePhase.step4Discard;
+    // When shields fully block (required = 0) the player just confirms with
+    // an empty discard — no card selection needed.
+    if (isStep4 && state.requiredDiscardTotal == 0) {
+      return;
+    }
     final selected = Set<String>.from(state.selectedCardIds);
-    if (selected.contains(event.cardId)) {
-      selected.remove(event.cardId);
+    if (isStep4) {
+      // Step 4 is one-at-a-time: replace any existing selection.
+      if (selected.contains(event.cardId)) {
+        selected.clear();
+      } else {
+        selected
+          ..clear()
+          ..add(event.cardId);
+      }
     } else {
-      selected.add(event.cardId);
+      if (selected.contains(event.cardId)) {
+        selected.remove(event.cardId);
+      } else {
+        selected.add(event.cardId);
+      }
     }
     emit(state.copyWith(selectedCardIds: selected));
   }

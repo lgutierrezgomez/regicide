@@ -114,6 +114,8 @@
     "when": "enemyNotDefeated",
     "damageToPlayer": "enemy.attack - cumulativeSpadeShield",
     "discardTotalAtLeast": "damageToPlayer",
+    "discardOneAtATime": true,
+    "stopWhenCumulativeMeetsDamage": true,
     "discardValues": { "number": "faceValue", "animalCompanion": 1, "jester": 0, "defeatedEnemyInHand": "inHandValue" },
     "failToPay": "allPlayersLose"
   },

@@ -399,19 +399,41 @@ function resolveYield(state: GameState, playerId: string): void {
   beginStep4(state);
 }
 
-/** Throws if the selected discard does not cover [state.pendingDamage]. */
-function validateDiscard(state: GameState, cards: Card[]): void {
-  const required = state.pendingDamage ?? 0;
-  const total = cards.reduce((s, c) => s + discardValue(c), 0);
-  if (total < required) {
-    throw new GameError("Discarded value too low", "INSUFFICIENT_DISCARD");
+/** Throws if the discard request doesn't match the Regicide step 4 rule:
+ * `pendingDamage === 0` must be empty (acknowledge), otherwise exactly one. */
+function validateDiscardCount(pendingDamage: number, count: number): void {
+  if (pendingDamage === 0) {
+    if (count !== 0) {
+      throw new GameError("Nothing to discard", "INVALID_DISCARD");
+    }
+    return;
+  }
+  if (count !== 1) {
+    throw new GameError("Discard one card at a time", "INVALID_DISCARD");
   }
 }
 
+/** Step 4 discard: one card at a time. Stop immediately when cumulative
+ * discards meet or exceed `pendingDamage` (Regicide rule).
+ *
+ * Caller must have validated `cards.length` via [validateDiscardCount] and
+ * already removed the card(s) from the player's hand. */
 function resolveDiscard(state: GameState, _playerId: string, cards: Card[]): void {
-  state.discard.push(...cards);
-  state.pendingDamage = null;
-  advanceTurn(state);
+  if (cards.length === 0) {
+    state.pendingDamage = null;
+    advanceTurn(state);
+    return;
+  }
+
+  state.discard.push(cards[0]);
+  const required = state.pendingDamage ?? 0;
+  const newPending = Math.max(0, required - discardValue(cards[0]));
+  if (newPending === 0) {
+    state.pendingDamage = null;
+    advanceTurn(state);
+  } else {
+    state.pendingDamage = newPending;
+  }
 }
 
 export function applyAction(state: GameState, playerId: string, action: GameAction): GameState {
@@ -453,9 +475,9 @@ export function applyAction(state: GameState, playerId: string, action: GameActi
       throw new GameError("Not in discard phase", "INVALID_PHASE");
     }
     assertTurn(state, playerId);
+    validateDiscardCount(state.pendingDamage ?? 0, action.cardIds.length);
     const hand = state.hands[playerId];
     const cards = peekHandCards(hand, action.cardIds);
-    validateDiscard(state, cards);
     removeFromHand(hand, cards);
     resolveDiscard(state, playerId, cards);
     return state;

@@ -46,10 +46,13 @@ class PlayerActionsPanel extends StatelessWidget {
       );
     }
     if (state.isDiscardPhase) {
+      final label = state.requiredDiscardTotal == 0
+          ? AppStrings.gameActionContinue
+          : AppStrings.gameActionDiscard(selectionCount);
       buttons.add(
         FilledButton(
           onPressed: busy || !state.canDiscard ? null : onDiscard,
-          child: Text(AppStrings.gameActionDiscard(selectionCount)),
+          child: Text(label),
         ),
       );
     }

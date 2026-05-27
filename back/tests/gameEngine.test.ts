@@ -199,8 +199,8 @@ describe("GameEngine", () => {
     expect(state.hands[pid].map((c) => c.id)).toContain(five.id);
   });
 
-  it("keeps hand intact when discard is insufficient", () => {
-    const state = createInitialState("R-bad-discard", ["p1"]);
+  it("keeps hand intact when step 4 discard sends more than one card", () => {
+    const state = createInitialState("R-bad-discard-count", ["p1"]);
     const pid = currentPlayerId(state);
     const two: (typeof state.hands.p1)[0] = {
       id: "n2",
@@ -208,14 +208,107 @@ describe("GameEngine", () => {
       suit: "hearts",
       rank: 2,
     };
-    state.hands[pid] = [two];
+    const three: (typeof state.hands.p1)[0] = {
+      id: "n3",
+      kind: "number",
+      suit: "clubs",
+      rank: 3,
+    };
+    state.hands[pid] = [two, three];
     state.phase = "STEP4_DISCARD";
-    state.pendingDamage = 10;
+    state.pendingDamage = 5;
 
     expect(() =>
-      applyAction(state, pid, { type: "discard", cardIds: [two.id] }),
-    ).toThrow();
-    expect(state.hands[pid].map((c) => c.id)).toEqual([two.id]);
+      applyAction(state, pid, { type: "discard", cardIds: [two.id, three.id] }),
+    ).toThrow(/one card at a time/i);
+    expect(state.hands[pid].map((c) => c.id).sort()).toEqual(
+      [two.id, three.id].sort(),
+    );
+    expect(state.pendingDamage).toBe(5);
+  });
+
+  it("step 4 discard one card at a time reduces pendingDamage", () => {
+    const state = createInitialState("R-one-at-a-time", ["p1"]);
+    const pid = currentPlayerId(state);
+    const three: (typeof state.hands.p1)[0] = {
+      id: "n3",
+      kind: "number",
+      suit: "hearts",
+      rank: 3,
+    };
+    const four: (typeof state.hands.p1)[0] = {
+      id: "n4",
+      kind: "number",
+      suit: "clubs",
+      rank: 4,
+    };
+    // Keep a buffer card so the solo player isn't lost on empty hand after step 4.
+    const buffer: (typeof state.hands.p1)[0] = {
+      id: "n9",
+      kind: "number",
+      suit: "diamonds",
+      rank: 9,
+    };
+    state.hands[pid] = [three, four, buffer];
+    state.phase = "STEP4_DISCARD";
+    state.pendingDamage = 5;
+
+    applyAction(state, pid, { type: "discard", cardIds: [three.id] });
+    expect(state.phase).toBe("STEP4_DISCARD");
+    expect(state.pendingDamage).toBe(2);
+    expect(state.hands[pid].map((c) => c.id).sort()).toEqual(
+      [four.id, buffer.id].sort(),
+    );
+    expect(state.discard.map((c) => c.id)).toContain(three.id);
+
+    applyAction(state, pid, { type: "discard", cardIds: [four.id] });
+    expect(state.phase).toBe("STEP1_PLAY_OR_YIELD");
+    expect(state.pendingDamage).toBeNull();
+    expect(state.hands[pid].map((c) => c.id)).toEqual([buffer.id]);
+  });
+
+  it("step 4 single discard exceeding pendingDamage ends step (player's choice)", () => {
+    const state = createInitialState("R-overdiscard", ["p1"]);
+    const pid = currentPlayerId(state);
+    const seven: (typeof state.hands.p1)[0] = {
+      id: "n7",
+      kind: "number",
+      suit: "hearts",
+      rank: 7,
+    };
+    const buffer: (typeof state.hands.p1)[0] = {
+      id: "n2",
+      kind: "number",
+      suit: "clubs",
+      rank: 2,
+    };
+    state.hands[pid] = [seven, buffer];
+    state.phase = "STEP4_DISCARD";
+    state.pendingDamage = 5;
+
+    applyAction(state, pid, { type: "discard", cardIds: [seven.id] });
+    expect(state.phase).toBe("STEP1_PLAY_OR_YIELD");
+    expect(state.pendingDamage).toBeNull();
+    expect(state.discard.map((c) => c.id)).toContain(seven.id);
+  });
+
+  it("step 4 rejects empty discard when pendingDamage > 0", () => {
+    const state = createInitialState("R-empty-bad", ["p1"]);
+    const pid = currentPlayerId(state);
+    const five: (typeof state.hands.p1)[0] = {
+      id: "n5",
+      kind: "number",
+      suit: "hearts",
+      rank: 5,
+    };
+    state.hands[pid] = [five];
+    state.phase = "STEP4_DISCARD";
+    state.pendingDamage = 5;
+
+    expect(() =>
+      applyAction(state, pid, { type: "discard", cardIds: [] }),
+    ).toThrow(/one card at a time/i);
+    expect(state.hands[pid].map((c) => c.id)).toEqual([five.id]);
   });
 });
 
